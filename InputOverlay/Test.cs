@@ -55,13 +55,5 @@ namespace InputOverlay
          TextDisplay.Text = pressedKeys;
       }
 
-      protected override void OnFormClosing(FormClosingEventArgs e)
-      {
-         if (Ki != null)
-         {
-            Ki.YarrIBeDoneWithTheHook();
-         }
-      }
-
    }
 }

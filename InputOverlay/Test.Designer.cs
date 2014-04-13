@@ -33,11 +33,10 @@
          // 
          // TextDisplay
          // 
-         this.TextDisplay.AutoSize = true;
          this.TextDisplay.Dock = System.Windows.Forms.DockStyle.Fill;
          this.TextDisplay.Location = new System.Drawing.Point(0, 0);
          this.TextDisplay.Name = "TextDisplay";
-         this.TextDisplay.Size = new System.Drawing.Size(0, 13);
+         this.TextDisplay.Size = new System.Drawing.Size(284, 262);
          this.TextDisplay.TabIndex = 0;
          // 
          // Test
@@ -50,7 +49,6 @@
          this.Text = "Test";
          this.Load += new System.EventHandler(this.Test_Load);
          this.ResumeLayout(false);
-         this.PerformLayout();
 
       }
 
