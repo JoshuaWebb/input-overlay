@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using Joshua.Webb.DataStructures;
 
 using InputOverlay.Model.Declerations;
+using System.ComponentModel;
 
 namespace InputOverlay.Model
 {
@@ -57,7 +58,12 @@ namespace InputOverlay.Model
          _rids[0].Flags = RawInputDeviceFlags.InputSink;
          _rids[0].Target = Handle;
 
-         RegisterRawInputDevices(_rids, (uint)_rids.Length, (uint)Marshal.SizeOf(_rids[0]));
+         if(!RegisterRawInputDevices(_rids, (uint)_rids.Length, (uint)Marshal.SizeOf(_rids[0])))
+         {
+            // Registration failed. Call GetLastError for the cause of the error.
+            // TODO: throw up an error dialogue and exit?
+            throw new Win32Exception(); 
+         }
       }
 
       protected override void WndProc(ref Message message)
@@ -68,67 +74,40 @@ namespace InputOverlay.Model
          {
             uint dwSize = 0;
 
-            GetRawInputData(message.LParam, UICommand.RID_INPUT, IntPtr.Zero, ref dwSize, (uint)Marshal.SizeOf(typeof(RAWINPUTHEADER)));
+            // The first call determines dwSize.
+            GetRawInputData(message.LParam, 
+                            UICommand.RID_INPUT, 
+                            IntPtr.Zero, 
+                            ref dwSize, 
+                            (uint)Marshal.SizeOf(typeof(RAWINPUTHEADER)));
 
-            IntPtr buffer = Marshal.AllocHGlobal((int)dwSize);
+            IntPtr rawInputBuffer = Marshal.AllocHGlobal((int)dwSize);
             try
             {
-               // Check that buffer points to something, and if so,
-               // call GetRawInputData again to fill the allocated memory
-               // with information about the input
-               if (buffer != IntPtr.Zero 
+               // The second call fills the buffer with the data and returns
+               // the size of the data it actually got, if that doesn't match
+               // something isn't right.
+               if (rawInputBuffer != IntPtr.Zero 
                    && GetRawInputData(message.LParam,
                                       UICommand.RID_INPUT,
-                                      buffer,
+                                      rawInputBuffer,
                                       ref dwSize,
                                       (uint)Marshal.SizeOf(typeof(RAWINPUTHEADER))) == dwSize)
                {
-                  // Store the message information in "raw", then check
-                  // that the input comes from a keyboard device before
-                  // processing it to raise an appropriate KeyPressed event.
-                  RAWINPUT raw = (RAWINPUT)Marshal.PtrToStructure(buffer, typeof(RAWINPUT));
+                  RAWINPUT raw = (RAWINPUT)Marshal.PtrToStructure(rawInputBuffer, typeof(RAWINPUT));
 
                   if (raw.Header.Type == RawInputType.Keyboard)
                   {
-                     ushort key = raw.Keyboard.VirtualKey;
-                     
-                     // Skip the extra key messages for "extended keys"
-                     if (key >= EXTENDED_KEY_FLAG)
+                     if (!ProcessKeyActivity(raw.Keyboard))
                      {
                         return;
-                     }
-
-                     // Pack the correct left/right information into modifier
-                     // keys.
-                     FixModifierKeys(ref key, raw.Keyboard.Flags, raw.Keyboard.MakeCode);
-
-
-                     // TODO: figure out which keyboard it came from??
-                     // http://www.codeproject.com/Articles/17123/
-
-                     if (raw.Keyboard.Message == WM_KEYDOWN
-                         || raw.Keyboard.Message == WM_SYSKEYDOWN)
-                     {
-                        // Only trigger activity for now keydown's
-                        if (CurrentlyPressed.Add(key))
-                        {
-                           TriggerKeyActivityDetectedEvent();
-                        }
-                     }
-                     else if (raw.Keyboard.Message == WM_KEYUP
-                             || raw.Keyboard.Message == WM_SYSKEYUP)
-                     {
-                        CurrentlyPressed.Remove(key);
-
-                        // always trigger activity for keyup's
-                        TriggerKeyActivityDetectedEvent();
                      }
                   }
                }
             }
             finally
             {
-               Marshal.FreeHGlobal(buffer);
+               Marshal.FreeHGlobal(rawInputBuffer);
             }
 
          } break;
@@ -137,40 +116,87 @@ namespace InputOverlay.Model
          base.WndProc(ref message);
       }
 
+      /// <summary>
+      /// Extracts the required key press information and triggers an event
+      /// for KeyActivity.
+      /// </summary>
+      /// <returns>false if keyboard activity should be ignored,
+      ///          true otherwise</returns>
+      private bool ProcessKeyActivity(RAWKEYBOARD rawKeyboard)
+      {
+         ushort key = rawKeyboard.VirtualKey;
+
+         // Skip the extra key messages for "extended keys"
+         if (key >= EXTENDED_KEY_FLAG)
+         {
+            return false;
+         }
+
+         // Pack the correct left/right information into the key value for
+         // modifier keys.
+         FixModifierKeys(ref key, rawKeyboard.Flags, rawKeyboard.MakeCode);
+
+         // TODO: figure out which keyboard it came from??
+         // http://www.codeproject.com/Articles/17123/
+         // pass in some sort of id or whatnot into TriggerKeyActivity...
+         // so that subscribers can distinguish keyboards
+
+         if (rawKeyboard.Message == WM_KEYDOWN
+             || rawKeyboard.Message == WM_SYSKEYDOWN)
+         {
+            // Only trigger activity for now keydown's
+            if (CurrentlyPressed.Add(key))
+            {
+               TriggerKeyActivityDetectedEvent();
+            }
+         }
+         else if (rawKeyboard.Message == WM_KEYUP
+                  || rawKeyboard.Message == WM_SYSKEYUP)
+         {
+            CurrentlyPressed.Remove(key);
+
+            // always trigger activity for keyup's
+            TriggerKeyActivityDetectedEvent();
+         }
+
+         return true;
+      }
 
       private static void FixModifierKeys(ref ushort virtualKey, RawKeyboardFlags flags, int makeCode)
       {
-         Keys realKeyValue = (Keys)virtualKey;
+         Keys realValue = (Keys)virtualKey;
 
          bool E0Flag = (flags & RawKeyboardFlags.E0) > 0;
 
-         switch (realKeyValue)
+         switch (realValue)
          {
-         // Right-hand CTRL and ALT have their e0 bit set 
+         // E0 is set for control and alt (if it's the right version) 
          case Keys.ControlKey:
          {
-            realKeyValue = E0Flag ? Keys.RControlKey : Keys.LControlKey;
+            realValue = E0Flag ? Keys.RControlKey : Keys.LControlKey;
          } break;
          case Keys.Menu:
          {
-            realKeyValue = E0Flag ? Keys.RMenu : Keys.LMenu;
+            realValue = E0Flag ? Keys.RMenu : Keys.LMenu;
          } break;
          case Keys.ShiftKey:
          {
-            realKeyValue = makeCode == SC_SHIFT_R ? Keys.RShiftKey : Keys.LShiftKey;
+            // Right shift and left shift have different makeCodes
+            realValue = makeCode == SC_SHIFT_R ? Keys.RShiftKey : Keys.LShiftKey;
          }  break;
          }
 
-         virtualKey = (ushort)realKeyValue;
+         virtualKey = (ushort)realValue;
       }
 
       // Let all observers know which keys are currently pressed 
       // (after some activity happened).
       private void TriggerKeyActivityDetectedEvent()
       {
-         if (KeyActivityDetected != null)
+         EventHandler<KeyActivityEventArgs> temp = KeyActivityDetected;
+         if (temp != null)
          {
-            KeyActivityDetected(this, new KeyActivityEventArgs(CurrentlyPressed.GetEnumerator()));
+            temp(this, new KeyActivityEventArgs(CurrentlyPressed.GetEnumerator()));
          }
       }
 
