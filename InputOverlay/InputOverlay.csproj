@@ -45,26 +45,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HistoryTest.cs">
+    <Compile Include="View\HistoryTest.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="HistoryTest.Designer.cs">
+    <Compile Include="View\HistoryTest.Designer.cs">
       <DependentUpon>HistoryTest.cs</DependentUpon>
     </Compile>
     <Compile Include="Model\Declerations\RawInput.cs" />
     <Compile Include="Model\Declerations\MessageWindow.cs" />
     <Compile Include="Model\KeyActivityEventArgs.cs" />
     <Compile Include="Model\KeyInterceptor.cs" />
-    <Compile Include="Test.cs">
+    <Compile Include="View\Test.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Test.Designer.cs">
+    <Compile Include="View\Test.Designer.cs">
       <DependentUpon>Test.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DataStructures\OrderedSet.cs" />
-    <EmbeddedResource Include="Test.resx">
+    <Compile Include="View\FormHelper.cs" />
+    <EmbeddedResource Include="View\Test.resx">
       <DependentUpon>Test.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
