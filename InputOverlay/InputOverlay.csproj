@@ -45,6 +45,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="HistoryTest.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="HistoryTest.Designer.cs">
+      <DependentUpon>HistoryTest.cs</DependentUpon>
+    </Compile>
     <Compile Include="Model\Declerations\RawInput.cs" />
     <Compile Include="Model\Declerations\MessageWindow.cs" />
     <Compile Include="Model\KeyActivityEventArgs.cs" />

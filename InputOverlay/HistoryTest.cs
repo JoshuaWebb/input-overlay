@@ -10,23 +10,48 @@ using System.Windows.Forms;
 
 using System.Runtime.InteropServices;
 
-using InputOverlay.View;
 using InputOverlay.Model;
+using InputOverlay.View;
+
+using Joshua.Webb.DataStructures;
 
 namespace InputOverlay
 {
-   public partial class Test : Form
+   public partial class HistoryTest : Form
    {
       #region private variables
 
+      private const int LIMIT = 20;
+
       private int _defaultWindowLong;
+
       private KeyInterceptor _ki;
+
+      private readonly Queue<int> _currentHistory;
+
+      private OrderedSet<int> _previouslyPressed;
 
       #endregion
 
       private EventHandler<KeyActivityEventArgs> KeyActivityCallback;
 
+      private OrderedSet<int> PreviouslyPressed
+      {
+         get
+         {
+            return _previouslyPressed;
+         }
+      }
+
       #region public properties
+
+      public Queue<int> CurrentHistory
+      {
+         get
+         {
+            return _currentHistory;
+         }
+      }
 
       public bool ShouldBeClickable { get; set; }
 
@@ -56,8 +81,11 @@ namespace InputOverlay
 
       #endregion
 
-      public Test(KeyInterceptor ki)
+      public HistoryTest(KeyInterceptor ki)
       {
+         _previouslyPressed = new OrderedSet<int>();
+         _currentHistory = new Queue<int>();
+
          Ki = ki;
          InitializeComponent();
 
@@ -70,37 +98,45 @@ namespace InputOverlay
 
          Ki.KeyActivityDetected += KeyActivityCallback;
          ShouldBeClickable = false;
-
-         HistoryTest h = new HistoryTest(Ki);
-         h.Show();
       }
 
       private void OnKeyActivity(object sender, KeyActivityEventArgs e)
       {
          String pressedKeys = "";
-         foreach (Keys key in Ki.CurrentlyPressed)
+         foreach (int key in Ki.CurrentlyPressed)
          {
-            ////// TEST toggle clickablity
-            if (key.Equals(Keys.LControlKey))
+            // For each new key.
+            if (!PreviouslyPressed.Contains(key))
             {
-               ShouldBeClickable = !ShouldBeClickable;
-               SetWindowClickable(Handle, ShouldBeClickable);
+               // Once we've reached the history limit.
+               if (CurrentHistory.Count >= LIMIT)
+               {
+                  // Remove the oldest character
+                  CurrentHistory.Dequeue();
+               }
+
+               // Add the newest characters (one by one in order)
+               CurrentHistory.Enqueue(key);
             }
+         }
+
+         foreach (Keys key in CurrentHistory)
+         {
             pressedKeys += key + " ";
          }
 
-         //Console.WriteLine(pressedKeys);
          TextDisplay.Text = pressedKeys;
+
+         _previouslyPressed = new OrderedSet<int>(Ki.CurrentlyPressed);
       }
 
       protected override void OnShown(EventArgs e)
       {
          base.OnShown(e);
          SetWindowTransparency(Handle, 75);
-         Location = new Point(Location.X, Location.Y + Location.Y / 2);
+         Location = new Point(Location.X, Location.Y + Location.Y / 2 + Size.Height*2);
       }
 
-      // TODO: break out into super class? "TransparentForm" or something?
       #region Transparency/Click-through-ability
 
       public enum GWL

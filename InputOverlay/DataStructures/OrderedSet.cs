@@ -58,6 +58,13 @@ namespace Joshua.Webb.DataStructures
 
       #region Constructors
 
+      // Copy constructor
+      public OrderedSet(OrderedSet<T> other)
+      {
+         _list = new LinkedList<T>(other._list);
+         _dict = new Dictionary<T, LinkedListNode<T>>(other._dict);
+      }
+
       public OrderedSet()
       {
          _list = new LinkedList<T>();
