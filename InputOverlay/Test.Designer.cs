@@ -33,20 +33,28 @@
          // 
          // TextDisplay
          // 
+         this.TextDisplay.CausesValidation = false;
          this.TextDisplay.Dock = System.Windows.Forms.DockStyle.Fill;
+         this.TextDisplay.Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
          this.TextDisplay.Location = new System.Drawing.Point(0, 0);
          this.TextDisplay.Name = "TextDisplay";
-         this.TextDisplay.Size = new System.Drawing.Size(284, 262);
+         this.TextDisplay.Size = new System.Drawing.Size(200, 100);
          this.TextDisplay.TabIndex = 0;
+         this.TextDisplay.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
          // 
          // Test
          // 
          this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
          this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-         this.ClientSize = new System.Drawing.Size(284, 262);
+         this.BackColor = System.Drawing.Color.Black;
+         this.ClientSize = new System.Drawing.Size(200, 100);
          this.Controls.Add(this.TextDisplay);
+         this.ForeColor = System.Drawing.SystemColors.ControlLightLight;
+         this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
          this.Name = "Test";
+         this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
          this.Text = "Test";
+         this.TopMost = true;
          this.Load += new System.EventHandler(this.Test_Load);
          this.ResumeLayout(false);
 
@@ -55,6 +63,7 @@
       #endregion
 
       private System.Windows.Forms.Label TextDisplay;
+
 
 
 

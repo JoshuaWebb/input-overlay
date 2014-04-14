@@ -44,6 +44,18 @@ namespace Joshua.Webb.DataStructures
 
       #endregion
 
+      #region Public properties
+
+      public int Count
+      {
+         get
+         {
+            return Dict.Count;
+         }
+      }
+
+      #endregion
+
       #region Constructors
 
       public OrderedSet()
