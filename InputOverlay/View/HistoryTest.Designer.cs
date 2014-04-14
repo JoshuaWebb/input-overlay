@@ -1,4 +1,4 @@
-﻿namespace InputOverlay
+﻿namespace InputOverlay.View
 {
    partial class HistoryTest
    {

@@ -15,11 +15,15 @@ using InputOverlay.View;
 
 using Joshua.Webb.DataStructures;
 
-namespace InputOverlay
+namespace InputOverlay.View
 {
    public partial class HistoryTest : Form
    {
       #region private variables
+
+      private const int TRANSPARENCY = 75;
+
+      private const int CORNER_RADIUS = 17;
 
       private const int LIMIT = 20;
 
@@ -89,7 +93,7 @@ namespace InputOverlay
          Ki = ki;
          InitializeComponent();
 
-         this.SetRoundedCorners(17);
+         this.SetRoundedCorners(CORNER_RADIUS);
       }
 
       private void Test_Load(object sender, EventArgs e)
@@ -133,7 +137,7 @@ namespace InputOverlay
       protected override void OnShown(EventArgs e)
       {
          base.OnShown(e);
-         SetWindowTransparency(Handle, 75);
+         SetWindowTransparency(Handle, TRANSPARENCY);
          Location = new Point(Location.X, Location.Y + Location.Y / 2 + Size.Height*2);
       }
 

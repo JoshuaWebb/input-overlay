@@ -13,11 +13,15 @@ using System.Runtime.InteropServices;
 using InputOverlay.View;
 using InputOverlay.Model;
 
-namespace InputOverlay
+namespace InputOverlay.View
 {
    public partial class Test : Form
    {
       #region private variables
+
+      private const int TRANSPARENCY = 75;
+
+      private const int CORNER_RADIUS = 17;
 
       private int _defaultWindowLong;
       private KeyInterceptor _ki;
@@ -61,7 +65,7 @@ namespace InputOverlay
          Ki = ki;
          InitializeComponent();
 
-         this.SetRoundedCorners(17);
+         this.SetRoundedCorners(CORNER_RADIUS);
       }
 
       private void Test_Load(object sender, EventArgs e)
@@ -96,7 +100,7 @@ namespace InputOverlay
       protected override void OnShown(EventArgs e)
       {
          base.OnShown(e);
-         SetWindowTransparency(Handle, 75);
+         SetWindowTransparency(Handle, TRANSPARENCY);
          Location = new Point(Location.X, Location.Y + Location.Y / 2);
       }
 
