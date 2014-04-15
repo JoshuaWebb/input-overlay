@@ -17,17 +17,15 @@ using Joshua.Webb.DataStructures;
 
 namespace InputOverlay.View
 {
-   public partial class HistoryTest : Form
+   public partial class HistoryTest : OverlayForm
    {
       #region private variables
 
-      private const int TRANSPARENCY = 75;
+      private const double MAX_TRANSPARENCY = 0.75;
 
       private const int CORNER_RADIUS = 17;
 
       private const int LIMIT = 20;
-
-      private int _defaultWindowLong;
 
       private KeyInterceptor _ki;
 
@@ -57,20 +55,6 @@ namespace InputOverlay.View
          }
       }
 
-      public bool ShouldBeClickable { get; set; }
-
-      public int DefaultWindowLong
-      {
-         get
-         {
-            return _defaultWindowLong;
-         }
-         private set
-         {
-            _defaultWindowLong = value;
-         }
-      }
-
       public KeyInterceptor Ki
       {
          get
@@ -87,11 +71,13 @@ namespace InputOverlay.View
 
       public HistoryTest(KeyInterceptor ki)
       {
+         InitializeComponent();
+
          _previouslyPressed = new OrderedSet<int>();
          _currentHistory = new Queue<int>();
+         Opacity = MAX_TRANSPARENCY;
 
          Ki = ki;
-         InitializeComponent();
 
          this.SetRoundedCorners(CORNER_RADIUS);
       }
@@ -101,7 +87,6 @@ namespace InputOverlay.View
          KeyActivityCallback = OnKeyActivity;
 
          Ki.KeyActivityDetected += KeyActivityCallback;
-         ShouldBeClickable = false;
       }
 
       private void OnKeyActivity(object sender, KeyActivityEventArgs e)
@@ -137,72 +122,7 @@ namespace InputOverlay.View
       protected override void OnShown(EventArgs e)
       {
          base.OnShown(e);
-         SetWindowTransparency(Handle, TRANSPARENCY);
          Location = new Point(Location.X, Location.Y + Location.Y / 2 + Size.Height*2);
       }
-
-      #region Transparency/Click-through-ability
-
-      public enum GWL
-      {
-         ExStyle = -20
-      }
-
-      public enum WS_EX
-      {
-         Transparent = 0x20,
-         Layered = 0x80000
-      }
-
-      public enum LWA
-      {
-         ColorKey = 0x1,
-         Alpha = 0x2
-      }
-
-      private void SetWindowTransparency(IntPtr hWnd, float percent)
-      {
-         byte alpha = (byte)((percent / 100) * 255);
-
-         if (DefaultWindowLong == 0)
-         {
-            DefaultWindowLong = GetWindowLong(hWnd, GWL.ExStyle) | (int)WS_EX.Layered;
-         }
-
-         //// SetWindowLong(hWnd, GWL.ExStyle, DefaultWindowLong);
-         SetWindowClickable(hWnd, ShouldBeClickable);
-         SetLayeredWindowAttributes(hWnd, 0, alpha, LWA.Alpha);
-      }
-
-      private void SetWindowClickable(IntPtr hWnd, bool clickable)
-      {
-         if (clickable)
-         {
-            // Keep everything else as it was, but turn this flag off.
-            DefaultWindowLong &= (int)~WS_EX.Transparent;
-         }
-         else
-         {
-            // Make sure this flag is on.
-            DefaultWindowLong |= (int)WS_EX.Transparent;
-         }
-
-         SetWindowLong(hWnd, GWL.ExStyle, DefaultWindowLong);
-      }
-
-      #region dllimports
-
-      [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
-      public static extern int GetWindowLong(IntPtr hWnd, GWL nIndex);
-
-      [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
-      public static extern int SetWindowLong(IntPtr hWnd, GWL nIndex, int dwNewLong);
-
-      [DllImport("user32.dll", EntryPoint = "SetLayeredWindowAttributes")]
-      public static extern bool SetLayeredWindowAttributes(IntPtr hWnd, int crKey, byte bAlpha, LWA dwFlags);
-
-      #endregion
-
-      #endregion
    }
 }
