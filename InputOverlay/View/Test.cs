@@ -75,7 +75,7 @@ namespace InputOverlay.View
             {
                Clickable = !Clickable;
             }
-            pressedKeys += key + " ";
+            pressedKeys += key.ToSymbol() + " ";
          }
 
          //Console.WriteLine(pressedKeys);

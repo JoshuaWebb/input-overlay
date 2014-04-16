@@ -55,6 +55,7 @@
     <Compile Include="Model\Declerations\MessageWindow.cs" />
     <Compile Include="Model\KeyActivityEventArgs.cs" />
     <Compile Include="Model\KeyInterceptor.cs" />
+    <Compile Include="View\KeyMapper.cs" />
     <Compile Include="View\OverlayForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -71,6 +72,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DataStructures\OrderedSet.cs" />
     <Compile Include="View\FormHelper.cs" />
+    <EmbeddedResource Include="View\HistoryTest.resx">
+      <DependentUpon>HistoryTest.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="View\Test.resx">
       <DependentUpon>Test.cs</DependentUpon>
     </EmbeddedResource>

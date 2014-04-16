@@ -75,6 +75,15 @@ namespace InputOverlay.View
 
          _previouslyPressed = new OrderedSet<int>();
          _currentHistory = new Queue<int>();
+         // Fill the buffer with nothing. Because after the user fills the
+         // buffer for the first time, it will always be full from then on,
+         // so why bother having separate logic for a not-full buffer, when we
+         // can cheaply just fill it from the start.
+         for (int i = 0; i < LIMIT; i++)
+         {
+            _currentHistory.Enqueue((int)Keys.None);
+         }
+
          Opacity = MAX_TRANSPARENCY;
 
          Ki = ki;
@@ -97,22 +106,31 @@ namespace InputOverlay.View
             // For each new key.
             if (!PreviouslyPressed.Contains(key))
             {
-               // Once we've reached the history limit.
-               if (CurrentHistory.Count >= LIMIT)
-               {
-                  // Remove the oldest character
-                  CurrentHistory.Dequeue();
-               }
+               // Remove the oldest character
+               CurrentHistory.Dequeue();
 
                // Add the newest characters (one by one in order)
                CurrentHistory.Enqueue(key);
             }
          }
 
-         foreach (Keys key in CurrentHistory)
+         // Process the history from newest to oldest.
+         foreach (Keys key in CurrentHistory.Reverse())
          {
-            pressedKeys += key + " ";
+            // Once we run out of display room, ignore any remaining history
+            // we have no space to display them.
+            if (pressedKeys.Length + key.ToSymbol().Length + 1 > LIMIT * 2)
+            {
+               break;
+            }
+            pressedKeys += key.ToSymbol() + " ";
          }
+
+         // Reverse the symbols so that the newest are on the right and the
+         // oldest are on the left.
+         string[] symbols = pressedKeys.Split(' ');
+         Array.Reverse(symbols);
+         pressedKeys = string.Join(" ", symbols);
 
          TextDisplay.Text = pressedKeys;
 
