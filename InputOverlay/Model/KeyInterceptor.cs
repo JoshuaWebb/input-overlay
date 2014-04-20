@@ -10,6 +10,13 @@ using System.ComponentModel;
 namespace InputOverlay.Model
 {
    // RAWINPUT version
+   //
+   // NOTE: it seems that global hotkeys don't seem to be detected with this
+   //       version (at least in its current state)
+   //
+   //       e.g. ctrl + shift + esc
+   //
+   //       However, the hooks version DOES pick these up
    public class KeyInterceptor : MessageWindow
    {
       private const int EXTENDED_KEY_FLAG = 0xFF;
@@ -165,6 +172,7 @@ namespace InputOverlay.Model
          // pass in some sort of id or whatnot into TriggerKeyActivity...
          // so that subscribers can distinguish keyboards
 
+         // TODO: Handle the pause key better... 
          if (rawKeyboard.Message == KEYINPUTTYPES.WM_KEYDOWN
              || rawKeyboard.Message == KEYINPUTTYPES.WM_SYSKEYDOWN)
          {
@@ -209,6 +217,12 @@ namespace InputOverlay.Model
             // Right shift and left shift have different makeCodes
             realValue = makeCode == SC_SHIFT_R ? Keys.RShiftKey : Keys.LShiftKey;
          }  break;
+
+         // TODO: Fix numpad/numlock situation? They don't have Keys values
+         //       so it may require defining all of the VK values manually,
+         //       either that or we pass on the RawKeyboardFlags as well...
+         //       which is pretty gross, and shouldn't have to be necessary.
+         //       Hopefully there are some spare -- not used/reserved values.
          }
 
          virtualKey = (ushort)realValue;
