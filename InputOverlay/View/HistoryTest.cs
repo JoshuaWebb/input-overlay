@@ -13,7 +13,7 @@ using System.Runtime.InteropServices;
 using InputOverlay.Model;
 using InputOverlay.View;
 
-using Joshua.Webb.DataStructures;
+using JoshuaWebb.DataStructures;
 
 namespace InputOverlay.View
 {
@@ -25,35 +25,15 @@ namespace InputOverlay.View
 
       private const int CORNER_RADIUS = 17;
 
-      private const int LIMIT = 20;
+      private const int LIMIT = KeyInterceptor.DEFAULT_HISTORY_SIZE;
 
       private KeyInterceptor _ki;
-
-      private readonly Queue<int> _currentHistory;
-
-      private OrderedSet<int> _previouslyPressed;
 
       #endregion
 
       private EventHandler<KeyActivityEventArgs> KeyActivityCallback;
 
-      private OrderedSet<int> PreviouslyPressed
-      {
-         get
-         {
-            return _previouslyPressed;
-         }
-      }
-
       #region public properties
-
-      public Queue<int> CurrentHistory
-      {
-         get
-         {
-            return _currentHistory;
-         }
-      }
 
       public KeyInterceptor Ki
       {
@@ -73,17 +53,6 @@ namespace InputOverlay.View
       {
          InitializeComponent();
 
-         _previouslyPressed = new OrderedSet<int>();
-         _currentHistory = new Queue<int>();
-         // Fill the buffer with nothing. Because after the user fills the
-         // buffer for the first time, it will always be full from then on,
-         // so why bother having separate logic for a not-full buffer, when we
-         // can cheaply just fill it from the start.
-         for (int i = 0; i < LIMIT; i++)
-         {
-            _currentHistory.Enqueue((int)Keys.None);
-         }
-
          Opacity = MAX_TRANSPARENCY;
 
          Ki = ki;
@@ -101,40 +70,30 @@ namespace InputOverlay.View
       private void OnKeyActivity(object sender, KeyActivityEventArgs e)
       {
          String pressedKeys = "";
-         foreach (int key in Ki.CurrentlyPressed)
+
+         // Only react to new keys
+         if (e.IsKeyDown)
          {
-            // For each new key.
-            if (!PreviouslyPressed.Contains(key))
+            // Process the history from newest to oldest.
+            foreach (Keys key in Ki.History.Backwards())
             {
-               // Remove the oldest character
-               CurrentHistory.Dequeue();
-
-               // Add the newest characters (one by one in order)
-               CurrentHistory.Enqueue(key);
+               // Once we run out of display room, ignore any remaining history
+               // (we have no space to display those).
+               if (pressedKeys.Length + key.ToSymbol().Length > LIMIT * 2)
+               {
+                  break;
+               }
+               pressedKeys += key.ToSymbol() + " ";
             }
+
+            // Reverse the symbols so that the newest are on the right and the
+            // oldest are on the left.
+            string[] symbols = pressedKeys.Split(' ');
+            Array.Reverse(symbols);
+            pressedKeys = string.Join(" ", symbols);
+
+            TextDisplay.Text = pressedKeys;
          }
-
-         // Process the history from newest to oldest.
-         foreach (Keys key in CurrentHistory.Reverse())
-         {
-            // Once we run out of display room, ignore any remaining history
-            // we have no space to display them.
-            if (pressedKeys.Length + key.ToSymbol().Length + 1 > LIMIT * 2)
-            {
-               break;
-            }
-            pressedKeys += key.ToSymbol() + " ";
-         }
-
-         // Reverse the symbols so that the newest are on the right and the
-         // oldest are on the left.
-         string[] symbols = pressedKeys.Split(' ');
-         Array.Reverse(symbols);
-         pressedKeys = string.Join(" ", symbols);
-
-         TextDisplay.Text = pressedKeys;
-
-         _previouslyPressed = new OrderedSet<int>(Ki.CurrentlyPressed);
       }
 
       protected override void OnShown(EventArgs e)

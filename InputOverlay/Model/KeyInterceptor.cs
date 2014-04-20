@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using Joshua.Webb.DataStructures;
+using JoshuaWebb.DataStructures;
 
 using InputOverlay.Model.Declerations;
 using System.ComponentModel;
@@ -12,22 +12,40 @@ namespace InputOverlay.Model
    // RAWINPUT version
    public class KeyInterceptor : MessageWindow
    {
-      private const int WM_KEYDOWN = 0x0100;
-      private const int WM_KEYUP = 0x0101;
-      private const int WM_SYSKEYDOWN = 0x0104;
-      private const int WM_SYSKEYUP = 0x0105;
-
       private const int EXTENDED_KEY_FLAG = 0xFF;
 
       internal const int SC_SHIFT_R = 0x36;
 
       private const int WM_INPUT = 0x00FF;
 
+      public const int DEFAULT_HISTORY_SIZE = 20;
+
+      private readonly RingBuffer<int> _history;
       private readonly OrderedSet<int> _currentlyPressed;
 
       public event EventHandler<KeyActivityEventArgs> KeyActivityDetected;
 
       private RAWINPUTDEVICE[] _rids;
+
+      public int HistorySize
+      {
+         get
+         {
+            return _history.Capacity;
+         }
+         set
+         {
+            _history.Resize(value);
+         }
+      }
+
+      public RingBuffer<int> History
+      {
+         get
+         {
+            return _history;
+         }
+      }
 
       public OrderedSet<int> CurrentlyPressed
       {
@@ -37,10 +55,14 @@ namespace InputOverlay.Model
          }
       }
 
-      public KeyInterceptor()
+      public KeyInterceptor(int historySize)
       {
          _currentlyPressed = new OrderedSet<int>();
+         _history = new RingBuffer<int>(historySize);
       }
+
+      public KeyInterceptor()
+         : this(DEFAULT_HISTORY_SIZE) { }
 
       // As soon as we have a handle for the window we can register our 
       // interest in keyboard inputs.
@@ -136,27 +158,30 @@ namespace InputOverlay.Model
          // modifier keys.
          FixModifierKeys(ref key, rawKeyboard.Flags, rawKeyboard.MakeCode);
 
+         KeyActivity keyActivity = new KeyActivity(key, rawKeyboard.Message);
+
          // TODO: figure out which keyboard it came from??
          // http://www.codeproject.com/Articles/17123/
          // pass in some sort of id or whatnot into TriggerKeyActivity...
          // so that subscribers can distinguish keyboards
 
-         if (rawKeyboard.Message == WM_KEYDOWN
-             || rawKeyboard.Message == WM_SYSKEYDOWN)
+         if (rawKeyboard.Message == KEYINPUTTYPES.WM_KEYDOWN
+             || rawKeyboard.Message == KEYINPUTTYPES.WM_SYSKEYDOWN)
          {
-            // Only trigger activity for now keydown's
+            // Only trigger activity for new keydown's
             if (CurrentlyPressed.Add(key))
             {
-               TriggerKeyActivityDetectedEvent();
+               History.Enqueue(key);
+               TriggerKeyActivityDetectedEvent(keyActivity);
             }
          }
-         else if (rawKeyboard.Message == WM_KEYUP
-                  || rawKeyboard.Message == WM_SYSKEYUP)
+         else if (rawKeyboard.Message == KEYINPUTTYPES.WM_KEYUP
+                  || rawKeyboard.Message == KEYINPUTTYPES.WM_SYSKEYUP)
          {
             CurrentlyPressed.Remove(key);
 
             // always trigger activity for keyup's
-            TriggerKeyActivityDetectedEvent();
+            TriggerKeyActivityDetectedEvent(keyActivity);
          }
 
          return true;
@@ -191,12 +216,12 @@ namespace InputOverlay.Model
 
       // Let all observers know which keys are currently pressed 
       // (after some activity happened).
-      private void TriggerKeyActivityDetectedEvent()
+      private void TriggerKeyActivityDetectedEvent(KeyActivity keyActivity)
       {
          EventHandler<KeyActivityEventArgs> temp = KeyActivityDetected;
          if (temp != null)
          {
-            temp(this, new KeyActivityEventArgs(CurrentlyPressed.GetEnumerator()));
+            temp(this, new KeyActivityEventArgs(CurrentlyPressed, keyActivity));
          }
       }
 

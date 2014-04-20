@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Joshua.Webb.DataStructures
+namespace JoshuaWebb.DataStructures
 {
    public class OrderedSet<T> : IEnumerable,
                                 IEnumerable<T>

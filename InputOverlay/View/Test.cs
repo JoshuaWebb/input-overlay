@@ -67,19 +67,27 @@ namespace InputOverlay.View
 
       private void OnKeyActivity(object sender, KeyActivityEventArgs e)
       {
-         String pressedKeys = "";
-         foreach (Keys key in Ki.CurrentlyPressed)
+         int trailingSpace = 0;
+         StringBuilder pressedKeys = new StringBuilder();
+         foreach (Keys key in e.Keys)
          {
             ////// TEST toggle clickablity
             if (key.Equals(Keys.LControlKey))
             {
                Clickable = !Clickable;
             }
-            pressedKeys += key.ToSymbol() + " ";
+            pressedKeys.AppendFormat("{0} ", key.ToSymbol());
+
          }
 
-         //Console.WriteLine(pressedKeys);
-         TextDisplay.Text = pressedKeys;
+         trailingSpace = pressedKeys.Length - 1;
+         if (trailingSpace > 0)
+         {
+            pressedKeys.Remove(trailingSpace, 1);
+         }
+
+         //Console.WriteLine(pressedKeys.ToString());
+         TextDisplay.Text = pressedKeys.ToString();
       }
 
       protected override void OnShown(EventArgs e)

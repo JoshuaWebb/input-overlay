@@ -45,6 +45,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataStructures\RingBuffer.cs" />
+    <Compile Include="Model\KeyActivity.cs" />
     <Compile Include="View\HistoryTest.cs">
       <SubType>Form</SubType>
     </Compile>
